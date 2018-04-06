@@ -4,7 +4,6 @@ author: "Ben Smith and Garrett Wallace"
 date: "April 4, 2018"
 output: html_document
 ---
-<div class="fold s o">
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 ```
@@ -94,9 +93,3 @@ Still, we're unsure that linear regression is the best way to look at it (and wh
   
 
 ###2a: More cleaning and Analysis!
-
-
-
-test!!!!
-
-</div>
