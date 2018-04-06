@@ -1,0 +1,102 @@
+---
+title: "NHL Analysis"
+author: "Ben Smith and Garrett Wallace"
+date: "April 4, 2018"
+output: html_document
+---
+<div class="fold s o">
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+#NHL Player Salary Analysis and Prediction
+###Ben Smith and Garrett Wallace
+
+
+
+
+
+##Step 1: Looking at the Data (and a little cleaning)
+
+```{r}
+nhl <- read.csv("nhl.csv")
+str(nhl)
+```
+
+```{r echo=FALSE}
+nhl$Position <- gsub("/.*","",nhl$Position)
+levels(nhl$Position) <- c(levels(nhl$Position), "W")
+nhl$Position[nhl$Position == "RW"] <- "W"
+nhl$Position[nhl$Position == "LW"] <- "W"
+nhl$Position <- as.factor(nhl$Position)
+
+nhl$DftRd[is.na(nhl$DftRd)] <- mean(nhl$DftRd, na.rm=TRUE)
+nhl$City <- NULL
+nhl$Pr.St <- NULL
+nhl$Cntry <- NULL
+
+library(lubridate)
+nhl$Born <- ymd(as.character(nhl$Born))
+nhl$Born[is.na(nhl$Born)] <- mean(nhl$Born, na.rm=TRUE)
+
+nhl$Last.Name <- NULL
+nhl$First.Name <- NULL
+
+nhlc <- subset(nhl, nhl$Position=="C")
+nhlw <- subset(nhl, nhl$Position=="W")
+nhld <- subset(nhl, nhl$Position=="D")
+```
+
+
+Looking initially at our data, we see plenty of different opportunities to analyze it. There are over 150 different variables on which to analyze hockey players, and our objective will be to see how these relate to the overall quality of the player and thus the amount they are paid. Neither Garrett nor Ben are particularly adept at hockey knowledge, so we turned to some friends and the Internet for advice on how to best begin parsing through all the variables. After some discussion, we broke player positions down to three categories that tend to have the same traits; Defensemen, Centers, and Wingsmen. Our ultimate intention is to build regressions both on players as a whole and within those subsets to extact meaningful data. We also got rid birth city/state/country as a predictor of salary, but kept nationality; it is possible people need to be paid more or less to make it a competitive wage relative to their home country. 
+
+Just for the sake of curiosity, lets get a few basic metrics:
+
+
+```{r echo=FALSE}
+
+table(nhl$Position)
+
+cat("NHL Average:", mean(nhl$Salary), "", sep ="\n")
+
+cat("Center Average:", mean(nhlc$Salary), "", sep ="\n")
+
+cat("Wingman Average:", mean(nhlw$Salary), "", sep ="\n")
+
+cat("Defense Average:",mean(nhld$Salary), "", sep ="\n")
+```
+
+
+
+So it looks like there's a little variability among players in salary. Center's are closest to average, with defensive players making a bit more and wings making a bit less. We also see that wings are the most readily available number of players in the dataset, which (assuming this dataset is representative of the NHL) might mean there are more wingsmen overall and thus any one wingsman is on average less valuable. 
+
+Now that we have some rough subsets, lets do some high-level analysis. 
+
+
+
+##Initial Analysis
+
+```{r}
+allvars <- reformulate(setdiff(colnames(nhl), "Salary"), response = "Salary")
+
+lin1 <- lm(allvars, data=nhl)
+summary(lin1)
+```
+
+
+
+####That's a lot of variables!
+
+We can see that when looking at the groups in aggregate, the data that's actually significant to the model is pretty sparse relative to all other inputs. Still, though, the Adjusted R-Squared of .6814 suggests that this data does a vaguely acceptable job of predicting.
+
+Still, we're unsure that linear regression is the best way to look at it (and when using other models, 150 variables for an 874-row dataset might not produce the most reliable data. So, from here we'll implement the advice we got on which statistics matter more, and we'll also try a few other models.
+  
+  
+
+###2a: More cleaning and Analysis!
+
+
+
+
+
+</div>
