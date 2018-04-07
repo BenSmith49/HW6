@@ -109,10 +109,90 @@ summary(lin1)
 We can see that when looking at the groups in aggregate, the data that's actually significant to the model is pretty sparse relative to all other inputs. Still, though, the Adjusted R-Squared of .6814 suggests that this data does a vaguely acceptable job of predicting.
 
 Still, we're unsure that linear regression is the best way to look at it (and when using other models, 150 variables for an 874-row dataset might not produce the most reliable data. So, from here we'll implement the advice we got on which statistics matter more, and we'll also try a few other models.
-  
-  
 
-###2a: More cleaning and Analysis!
 
+  
+###2a: Offensive Players Analysis
+
+While NHL fans praise hockey players for their defensive toughness, you need good offense to win games. As mentioned earlier, centers and wings account for the majority of attacking plays that can end up in goals, and we want to identify exactly which factors NHL teams most value in their offensive players, thus resulting in the greatest salaries.
+
+The analysis of all offensive players combines stats that are important for both centers and wings. Centers are generally responsible for faceoffs, so the analysis of wings does not include faceoff statistics but is the same otherwise.
+
+```{r, echo=FALSE}
+
+offense_analysis <- nhlc[,c("Salary", "X.FOT", "dzFOL", "dzFOW", "nzFOL", "nzFOW", "ozFOL", "ozFOW", "A1", "A2", "CF", "DSF", "FF", "G", "GF", "iCF", "iDS", "iFF", "iFOL", "iFOW", "iSCF", "ixG", "Pass", "RSF", "SCF", "SH.", "FO.")]
+
+#nzGFPF OCF OFF OppCF60 OppFF60 OppGF60 OppSF60 TMGF60
+
+offensevars <- reformulate(setdiff(colnames(offense_analysis), "Salary"), response = "Salary")
+
+offensemodel <- lm(offensevars, data=nhl)
+summary(offensemodel)
+```
+
+```{r, echo=FALSE}
+
+wings_analysis <- nhlc[,c("Salary", "A1", "A2", "CF", "DSF", "FF", "G", "GF", "iCF", "iDS", "iFF", "iSCF", "ixG", "Pass", "RSF", "SCF", "SH.")]
+
+wingsvars <- reformulate(setdiff(colnames(wings_analysis), "Salary"), response = "Salary")
+
+wingsmodel <- lm(wingsvars, data=nhl)
+summary(wingsmodel)
+```
+
+In the linear models for all offensive players and exclusively wings, the only variable that came back as statistically signficiant with a p-value of .001 was iDS - dangerous shots taken by this player, the sum of rebounds and shots off the rush. When considered logically, this makes sense when determining what teams are paying for in regards to offensive players - they want individuals who are going to get the puck on net with a high quality shot and not just aimlessly shoot and hope for the best, in addition to being aggressive off rebounds. When players have a high degree of danger shots, it minimizes the importance of total quantity of shots.
+
+For wings, CF (the team's shot attempts when this player was on the ice) and primary assists (passes to a player that scored) were also significant. Overall, we can conclude that teams are paying all offensive players for danger shots, but also expect wings to contribute to their team's offensive performance in ways other than shooting. We were surprised to see that faceoff statistics were not considered to be statistically significant.
+
+``` {r, echo=FALSE}
+normalize <- function(x) { 
+  return((x - min(x)) / (max(x) - min(x)))
+}
+
+offense_MM <- as.data.frame(model.matrix(~ . -1, data = offense_analysis))
+offense_MM$Salary <- NULL
+
+offense_norm <- as.data.frame(lapply(offense_MM, normalize))
+#head(offense_norm)
+
+nrow(offense_norm)
+nrow(offense_analysis)
+
+offense_norm$salary <- offense_analysis$Salary
+levels(offense_norm$salary) <- c("0", "1")
+offense_norm$salary <- as.numeric(offense_norm$salary)
+offense_norm$salary <- offense_norm$salary-1
+#why do we need previous row
+
+offense_train <- offense_norm[1:194, ]
+offense_test <- offense_norm[30001:258, ]
+#line before may be 251 and not 258 - check this
+
+library(neuralnet)
+
+f <-reformulate(setdiff(colnames(offense_train), "salary") , response = "salary")
+
+offense_ann <- neuralnet(formula = f, data = offense_train, hidden=2, stepmax = 1e6)
+
+plot(offense_ann)
+
+```
+
+``` {r, echo=FALSE}
+
+correlation <- cor(offense_analysis, use = "complete.obs")
+round(correlation, 2)
+install.packages("Hmisc")
+library(Hmisc)
+res2 <- rcorr(as.matrix(offense_analysis))
+res2
+res2$P
+```
+
+
+
+### Conclusion
+
+Overall, we've identified which factors tend to be the most significant for each position in regard to determining their salary. Now, NHL front offices must determine whether the stats they are paying for are actually worthwhile - if they find that ...
 
 
