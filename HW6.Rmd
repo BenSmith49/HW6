@@ -165,7 +165,7 @@ offense_norm$salary <- offense_norm$salary-1
 #why do we need previous row
 
 offense_train <- offense_norm[1:194, ]
-offense_test <- offense_norm[30001:258, ]
+offense_test <- offense_norm[195:258, ]
 #line before may be 251 and not 258 - check this
 
 library(neuralnet)
